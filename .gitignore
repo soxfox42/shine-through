@@ -1,0 +1,4 @@
+.cache/
+build/
+.lock-waf_*_build
+compile_commands.json

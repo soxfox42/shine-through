@@ -1,0 +1,33 @@
+{
+  "name": "shine-throught",
+  "author": "soxfox42",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Shine Through",
+    "uuid": "fd105337-115f-46a7-ae11-e14d56f911e8",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "basalt"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [],
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "NUMBERS",
+          "file": "numbers.png",
+          "memoryFormat": "1Bit"
+        }
+      ]
+    }
+  }
+}
