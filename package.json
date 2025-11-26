@@ -24,7 +24,7 @@
         {
           "type": "bitmap",
           "name": "NUMBERS",
-          "file": "numbers.png",
+          "file": "numbers-big.png",
           "memoryFormat": "1Bit"
         }
       ]
