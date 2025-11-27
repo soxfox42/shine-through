@@ -1,0 +1,10 @@
+[
+  {
+    "label": "run in emulator",
+    "command": "pebble build && pebble install --emulator basalt"
+  },
+  {
+    "label": "run on watch",
+    "command": "pebble build && pebble install --cloudpebble"
+  }
+]

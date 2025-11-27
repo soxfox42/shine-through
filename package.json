@@ -23,9 +23,14 @@
       "media": [
         {
           "type": "bitmap",
-          "name": "NUMBERS",
-          "file": "numbers-big.png",
+          "name": "NUMBER_FONT",
+          "file": "numbers.png",
           "memoryFormat": "1Bit"
+        },
+        {
+          "type": "bitmap",
+          "name": "TEXT_FONT",
+          "file": "text.png"
         }
       ]
     }

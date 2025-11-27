@@ -1,22 +1,27 @@
 #include <pebble.h>
 #include <stdint.h>
 
+#include "atlas.h"
+
 static Window *s_window;
-static GBitmap *s_numbers;
+static GBitmap *s_number_font;
+static GBitmap *s_text_font;
+static Layer *s_top_text;
+static Layer *s_bottom_text;
 
 const int number_gap = 12;
 const int number_shift_x = 12;
 const int number_shift_y = 18;
 
-const uint8_t hours_color = 0b11110100;
-const uint8_t minutes_color = 0b11001011;
-const uint8_t blend_color = 0b11110111;
+const uint8_t hours_color = 0b11011100;
+const uint8_t minutes_color = 0b11110100;
+const uint8_t blend_color = 0b11111100;
 
 static void draw_number(GBitmap *fb, GPoint pos, int number, uint8_t main_color, uint8_t blend_color) {
     GRect bounds = gbitmap_get_bounds(fb);
-    uint8_t *font_data = gbitmap_get_data(s_numbers);
-    int font_stride = gbitmap_get_bytes_per_row(s_numbers);
-    GRect font_bounds = gbitmap_get_bounds(s_numbers);
+    uint8_t *font_data = gbitmap_get_data(s_number_font);
+    int font_stride = gbitmap_get_bytes_per_row(s_number_font);
+    GRect font_bounds = gbitmap_get_bounds(s_number_font);
     int font_width = font_bounds.size.w / 10;
     int font_height = font_bounds.size.h;
 
@@ -44,7 +49,7 @@ static void draw_number(GBitmap *fb, GPoint pos, int number, uint8_t main_color,
     }
 }
 
-static void layer_update(Layer *layer, GContext *ctx) {
+static void number_layer_update(Layer *layer, GContext *ctx) {
     time_t now_ = time(NULL);
     struct tm *now = localtime(&now_);
 
@@ -52,7 +57,7 @@ static void layer_update(Layer *layer, GContext *ctx) {
     graphics_context_set_fill_color(ctx, GColorBlack);
     graphics_fill_rect(ctx, bounds, 0, 0);
 
-    GRect font_bounds = gbitmap_get_bounds(s_numbers);
+    GRect font_bounds = gbitmap_get_bounds(s_number_font);
     int font_width = font_bounds.size.w / 10;
     int font_height = font_bounds.size.h;
 
@@ -77,22 +82,73 @@ static void layer_update(Layer *layer, GContext *ctx) {
     graphics_release_frame_buffer(ctx, fb);
 }
 
+static GRect get_atlas(char c) {
+    for (unsigned int i = 0; i < ARRAY_LENGTH(TEXT_FONT_ATLAS); i++) {
+        if (TEXT_FONT_ATLAS[i].character == c) {
+            return TEXT_FONT_ATLAS[i].rect;
+        }
+    }
+    return GRectZero;
+}
+
+static void draw_text(Layer *layer, GContext *ctx, char *text, bool right) {
+    GRect bounds = layer_get_bounds(layer);
+    int x = 0;
+    size_t len = strlen(text);
+
+    for (size_t i = 0; i < len; i++) {
+        size_t j = right ? len - i - 1 : i;
+        if (text[j] == ' ') {
+            x += 8;
+            continue;
+        }
+
+        GRect src_rect = get_atlas(text[j]);
+        gbitmap_set_bounds(s_text_font, src_rect);
+        GRect dest_rect = right
+            ? GRect(bounds.size.w - x - src_rect.size.w, 0, src_rect.size.w, src_rect.size.h)
+            : GRect(x, 0, src_rect.size.w, src_rect.size.h);
+        graphics_draw_bitmap_in_rect(ctx, s_text_font, dest_rect);
+
+        x += src_rect.size.w + 2;
+    }
+}
+
+static void top_text_layer_update(Layer *layer, GContext *ctx) {
+    draw_text(layer, ctx, "THU 27", false);
+}
+
+static void bottom_text_layer_update(Layer *layer, GContext *ctx) {
+    draw_text(layer, ctx, "70%", true);
+}
+
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     layer_mark_dirty(window_get_root_layer(s_window));
 }
 
 static void window_load(Window *window) {
-    Layer *layer = window_get_root_layer(window);
-    layer_set_update_proc(layer, layer_update);
+    Layer *root = window_get_root_layer(window);
+    layer_set_update_proc(root, number_layer_update);
     tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+
+    s_top_text = layer_create(GRect(4, 4, PBL_DISPLAY_WIDTH - 8, 20));
+    layer_set_update_proc(s_top_text, top_text_layer_update);
+    layer_add_child(root, s_top_text);
+
+    s_bottom_text = layer_create(GRect(4, PBL_DISPLAY_HEIGHT - 24, PBL_DISPLAY_WIDTH - 8, 20));
+    layer_set_update_proc(s_bottom_text, bottom_text_layer_update);
+    layer_add_child(root, s_bottom_text);
 }
 
 static void window_unload(Window *window) {
+    layer_destroy(s_top_text);
+    layer_destroy(s_bottom_text);
     tick_timer_service_unsubscribe();
 }
 
 static void app_init(void) {
-    s_numbers = gbitmap_create_with_resource(RESOURCE_ID_NUMBERS);
+    s_number_font = gbitmap_create_with_resource(RESOURCE_ID_NUMBER_FONT);
+    s_text_font = gbitmap_create_with_resource(RESOURCE_ID_TEXT_FONT);
 
     s_window = window_create();
     window_set_window_handlers(
@@ -107,7 +163,7 @@ static void app_init(void) {
 
 static void app_deinit(void) {
     window_destroy(s_window);
-    gbitmap_destroy(s_numbers);
+    gbitmap_destroy(s_number_font);
 }
 
 int main(void) {
