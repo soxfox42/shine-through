@@ -135,10 +135,9 @@ static void bottom_text_layer_update(Layer *layer, GContext *ctx) {
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     layer_mark_dirty(window_get_root_layer(s_window));
-}
-
-static void handle_date_update(struct tm *tick_time, TimeUnits units_changed) {
-    layer_mark_dirty(s_top_text);
+    if (units_changed & DAY_UNIT) {
+        layer_mark_dirty(s_top_text);
+    }
 }
 
 static void handle_battery_update(BatteryChargeState charge) {
@@ -148,7 +147,7 @@ static void handle_battery_update(BatteryChargeState charge) {
 static void window_load(Window *window) {
     Layer *root = window_get_root_layer(window);
     layer_set_update_proc(root, number_layer_update);
-    tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+    tick_timer_service_subscribe(MINUTE_UNIT | DAY_UNIT, handle_tick);
 
     s_top_text = layer_create(GRect(4, 4, PBL_DISPLAY_WIDTH - 8, 20));
     layer_set_update_proc(s_top_text, top_text_layer_update);
@@ -158,7 +157,6 @@ static void window_load(Window *window) {
     layer_set_update_proc(s_bottom_text, bottom_text_layer_update);
     layer_add_child(root, s_bottom_text);
 
-    tick_timer_service_subscribe(DAY_UNIT, handle_date_update);
     battery_state_service_subscribe(handle_battery_update);
 }
 
