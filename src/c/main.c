@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "atlas.h"
 
@@ -83,6 +84,9 @@ static void number_layer_update(Layer *layer, GContext *ctx) {
 }
 
 static GRect get_atlas(char c) {
+    if (c >= 'a' && c <= 'z') {
+        c += 'A' - 'a';
+    }
     for (unsigned int i = 0; i < ARRAY_LENGTH(TEXT_FONT_ATLAS); i++) {
         if (TEXT_FONT_ATLAS[i].character == c) {
             return TEXT_FONT_ATLAS[i].rect;
@@ -115,15 +119,30 @@ static void draw_text(Layer *layer, GContext *ctx, char *text, bool right) {
 }
 
 static void top_text_layer_update(Layer *layer, GContext *ctx) {
-    draw_text(layer, ctx, "THU 27", false);
+    time_t now_ = time(NULL);
+    struct tm *now = localtime(&now_);
+    char buf[16];
+    strftime(buf, sizeof(buf), "%a %d", now);
+    draw_text(layer, ctx, buf, false);
 }
 
 static void bottom_text_layer_update(Layer *layer, GContext *ctx) {
-    draw_text(layer, ctx, "70%", true);
+    int battery_level = battery_state_service_peek().charge_percent;
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%d%%", battery_level);
+    draw_text(layer, ctx, buf, true);
 }
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     layer_mark_dirty(window_get_root_layer(s_window));
+}
+
+static void handle_date_update(struct tm *tick_time, TimeUnits units_changed) {
+    layer_mark_dirty(s_top_text);
+}
+
+static void handle_battery_update(BatteryChargeState charge) {
+    layer_mark_dirty(s_bottom_text);
 }
 
 static void window_load(Window *window) {
@@ -138,6 +157,9 @@ static void window_load(Window *window) {
     s_bottom_text = layer_create(GRect(4, PBL_DISPLAY_HEIGHT - 24, PBL_DISPLAY_WIDTH - 8, 20));
     layer_set_update_proc(s_bottom_text, bottom_text_layer_update);
     layer_add_child(root, s_bottom_text);
+
+    tick_timer_service_subscribe(DAY_UNIT, handle_date_update);
+    battery_state_service_subscribe(handle_battery_update);
 }
 
 static void window_unload(Window *window) {
