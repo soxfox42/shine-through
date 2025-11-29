@@ -25,8 +25,15 @@ void render_time(BitmapLayer *layer, GBitmap *font) {
 
     time_t now_ = time(NULL);
     struct tm *now = localtime(&now_);
-    int hour_tens = now->tm_hour / 10;
-    int hour_ones = now->tm_hour % 10;
+    int hour = now->tm_hour;
+    if (!clock_is_24h_style()) {
+        hour %= 12;
+        if (hour == 0) {
+            hour = 12;
+        }
+    }
+    int hour_tens = hour / 10;
+    int hour_ones = hour % 10;
     int minute_tens = now->tm_min / 10;
     int minute_ones = now->tm_min % 10;
 
