@@ -6,7 +6,9 @@
     "pebble-app"
   ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "pebble": {
     "displayName": "Shine Through",
     "uuid": "fd105337-115f-46a7-ae11-e14d56f911e8",
@@ -18,7 +20,15 @@
     "watchapp": {
       "watchface": true
     },
-    "messageKeys": [],
+    "messageKeys": [
+      "BackgroundColor",
+      "HoursColor",
+      "MinutesColor",
+      "OverlapColor",
+      "TextColor",
+      "TopText",
+      "BottomText"
+    ],
     "resources": {
       "media": [
         {
@@ -33,6 +43,9 @@
           "file": "text.png"
         }
       ]
-    }
+    },
+    "capabilities": [
+      "configurable"
+    ]
   }
 }

@@ -3,6 +3,7 @@
 
 #include "atlas.h"
 #include "render.h"
+#include "settings.h"
 
 static GBitmap *s_number_font;
 static GBitmap *s_text_font;
@@ -82,6 +83,20 @@ static void handle_unobstructed_area_change(AnimationProgress progress, void *co
     layer_set_bounds(time_layer, bounds);
 }
 
+void apply_settings(void) {
+    static GColor text_palette[2];
+    text_palette[0] = g_settings.palette[0];
+    text_palette[1] = g_settings.text_color;
+
+    window_set_background_color(s_window, g_settings.palette[0]);
+    gbitmap_set_palette(s_text_font, text_palette, false);
+    gbitmap_set_palette(s_time_bitmap, g_settings.palette, false);
+
+    layer_mark_dirty(bitmap_layer_get_layer(s_time));
+    layer_mark_dirty(s_top_text);
+    layer_mark_dirty(s_bottom_text);
+}
+
 static void window_load(Window *window) {
     Layer *root = window_get_root_layer(window);
     GRect bounds = layer_get_unobstructed_bounds(root);
@@ -110,6 +125,8 @@ static void window_load(Window *window) {
     handle_tick(NULL, MINUTE_UNIT);
     battery_state_service_subscribe(handle_battery_update);
     unobstructed_area_service_subscribe((UnobstructedAreaHandlers){.change = handle_unobstructed_area_change}, NULL);
+
+    apply_settings();
 }
 
 static void window_unload(Window *window) {
@@ -121,6 +138,8 @@ static void window_unload(Window *window) {
 }
 
 static void app_init(void) {
+    settings_init();
+
     s_number_font = gbitmap_create_with_resource(RESOURCE_ID_NUMBER_FONT);
     s_text_font = gbitmap_create_with_resource(RESOURCE_ID_TEXT_FONT);
 
@@ -132,7 +151,6 @@ static void app_init(void) {
             .unload = window_unload,
         }
     );
-    window_set_background_color(s_window, GColorBlack);
     window_stack_push(s_window, true);
 }
 
