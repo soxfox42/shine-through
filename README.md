@@ -1,7 +1,7 @@
 # Shine Through
 
-An upcoming watchface for Pebble Time (with other Pebbles to come later).
+[![Install on Pebble](https://img.shields.io/badge/Rebble_Store-1.0-orange)](https://apps.rebble.io/en_US/application/692ad49949be450009b545c7)
 
-![Shine Through watchface](screenshot.png)
+A Pebble watchface with a neat overlap effect between hours and minutes.
 
-This is now usable as a watchface, but has no customisation options yet.
+![Shine Through screenshot](screenshot.png)
