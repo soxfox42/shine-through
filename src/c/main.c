@@ -49,30 +49,60 @@ static void draw_text(Layer *layer, GContext *ctx, char *text, bool right) {
     }
 }
 
+// Returned string is valid until next call.
+static char *get_text(TextMode mode) {
+    static char buf[32];
+    time_t now_;
+    struct tm *now;
+    BatteryChargeState charge_state;
+    int steps;
+
+    switch (mode) {
+    case TextModeNone:
+        return "";
+    case TextModeWeekdayDay:
+        now_ = time(NULL);
+        now = localtime(&now_);
+        strftime(buf, sizeof(buf), "%a %d", now);
+        return buf;
+    case TextModeDayMonth:
+        now_ = time(NULL);
+        now = localtime(&now_);
+        strftime(buf, sizeof(buf), "%d/%m", now);
+        return buf;
+    case TextModeBattery:
+        charge_state = battery_state_service_peek();
+        snprintf(buf, sizeof(buf), "%d%%", charge_state.charge_percent);
+        return buf;
+    case TextModeAMPM:
+        now_ = time(NULL);
+        now = localtime(&now_);
+        return now->tm_hour >= 12 ? "PM" : "AM";
+    case TextModeSteps:
+        steps = health_service_sum_today(HealthMetricStepCount);
+        snprintf(buf, sizeof(buf), "%d", steps);
+        return buf;
+    }
+
+    return "";
+}
+
 static void top_text_layer_update(Layer *layer, GContext *ctx) {
-    time_t now_ = time(NULL);
-    struct tm *now = localtime(&now_);
-    char buf[16];
-    strftime(buf, sizeof(buf), "%a %d", now);
-    draw_text(layer, ctx, buf, false);
+    draw_text(layer, ctx, get_text(g_settings.top_text), false);
 }
 
 static void bottom_text_layer_update(Layer *layer, GContext *ctx) {
-    int battery_level = battery_state_service_peek().charge_percent;
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%d%%", battery_level);
-    draw_text(layer, ctx, buf, true);
+    draw_text(layer, ctx, get_text(g_settings.bottom_text), true);
 }
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     render_time(s_time, s_number_font);
-
-    if (units_changed & DAY_UNIT) {
-        layer_mark_dirty(s_top_text);
-    }
+    layer_mark_dirty(s_top_text);
+    layer_mark_dirty(s_bottom_text);
 }
 
 static void handle_battery_update(BatteryChargeState charge) {
+    layer_mark_dirty(s_top_text);
     layer_mark_dirty(s_bottom_text);
 }
 
@@ -121,7 +151,7 @@ static void window_load(Window *window) {
     bitmap_layer_set_bitmap(s_time, s_time_bitmap);
     layer_add_child(root, bitmap_layer_get_layer(s_time));
 
-    tick_timer_service_subscribe(MINUTE_UNIT | DAY_UNIT, handle_tick);
+    tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
     handle_tick(NULL, MINUTE_UNIT);
     battery_state_service_subscribe(handle_battery_update);
     unobstructed_area_service_subscribe((UnobstructedAreaHandlers){.change = handle_unobstructed_area_change}, NULL);

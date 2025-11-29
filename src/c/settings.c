@@ -12,6 +12,8 @@ static void default_settings(void) {
     g_settings.palette[2] = GColorBrightGreen;
     g_settings.palette[3] = GColorYellow;
     g_settings.text_color = GColorWhite;
+    g_settings.top_text = TextModeWeekdayDay;
+    g_settings.bottom_text = TextModeBattery;
 }
 
 static void load_settings(void) {
@@ -36,6 +38,10 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
             g_settings.palette[3] = GColorFromHEX(tuple->value->uint32);
         } else if (tuple->key == MESSAGE_KEY_TextColor) {
             g_settings.text_color = GColorFromHEX(tuple->value->uint32);
+        } else if (tuple->key == MESSAGE_KEY_TopText) {
+            g_settings.top_text = atoi(tuple->value->cstring);
+        } else if (tuple->key == MESSAGE_KEY_BottomText) {
+            g_settings.bottom_text = atoi(tuple->value->cstring);
         }
     } while ((tuple = dict_read_next(iter)));
     apply_settings();
@@ -46,5 +52,5 @@ void settings_init(void) {
     load_settings();
 
     app_message_register_inbox_received(inbox_received);
-    app_message_open(512, 128);
+    app_message_open(128, 128);
 }
