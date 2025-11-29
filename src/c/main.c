@@ -1,5 +1,4 @@
 #include <pebble.h>
-#include <stdint.h>
 #include <stdio.h>
 
 #include "atlas.h"
