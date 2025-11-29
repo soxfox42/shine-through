@@ -76,8 +76,16 @@ static void handle_battery_update(BatteryChargeState charge) {
     layer_mark_dirty(s_bottom_text);
 }
 
+static void handle_unobstructed_area_change(AnimationProgress progress, void *context) {
+    GRect bounds = layer_get_unobstructed_bounds(window_get_root_layer(s_window));
+
+    Layer *time_layer = bitmap_layer_get_layer(s_time);
+    layer_set_bounds(time_layer, bounds);
+}
+
 static void window_load(Window *window) {
     Layer *root = window_get_root_layer(window);
+    GRect bounds = layer_get_unobstructed_bounds(root);
 
     s_top_text = layer_create(GRect(4, 4, PBL_DISPLAY_WIDTH - 8, 20));
     layer_set_update_proc(s_top_text, top_text_layer_update);
@@ -95,13 +103,14 @@ static void window_load(Window *window) {
     palette[3] = GColorYellow;
     gbitmap_set_palette(s_time_bitmap, palette, false);
 
-    s_time = bitmap_layer_create(GRect(0, 30, 144, 108));
+    s_time = bitmap_layer_create(bounds);
     bitmap_layer_set_bitmap(s_time, s_time_bitmap);
     layer_add_child(root, bitmap_layer_get_layer(s_time));
 
     tick_timer_service_subscribe(MINUTE_UNIT | DAY_UNIT, handle_tick);
     handle_tick(NULL, MINUTE_UNIT);
     battery_state_service_subscribe(handle_battery_update);
+    unobstructed_area_service_subscribe((UnobstructedAreaHandlers){.change = handle_unobstructed_area_change}, NULL);
 }
 
 static void window_unload(Window *window) {
