@@ -1,7 +1,10 @@
 #include "render.h"
+#include "utils.h"
 
 const int number_dx = 12;
 const int number_dy = 18;
+
+static GBitmap *s_outline_font;
 
 static inline void set_2bpp_pixel(uint8_t *data, int x, int y, uint16_t stride, uint8_t color) {
     int index = y * stride + (x >> 2);
@@ -23,19 +26,8 @@ void render_time(BitmapLayer *layer, GBitmap *font) {
     uint8_t *font_data = gbitmap_get_data(font);
     uint16_t font_stride = gbitmap_get_bytes_per_row(font);
 
-    time_t now_ = time(NULL);
-    struct tm *now = localtime(&now_);
-    int hour = now->tm_hour;
-    if (!clock_is_24h_style()) {
-        hour %= 12;
-        if (hour == 0) {
-            hour = 12;
-        }
-    }
-    int hour_tens = hour / 10;
-    int hour_ones = hour % 10;
-    int minute_tens = now->tm_min / 10;
-    int minute_ones = now->tm_min % 10;
+    int digits[4];
+    get_time_digits(digits);
 
     const GBitmap *bitmap = bitmap_layer_get_bitmap(layer);
     GRect bounds = gbitmap_get_bounds(bitmap);
@@ -49,22 +41,22 @@ void render_time(BitmapLayer *layer, GBitmap *font) {
                 if (x < font_width) {
                     int px = x;
                     int py = y;
-                    p |= get_1bpp_pixel(font_data, hour_tens * font_width + px, py, font_stride) << 1;
+                    p |= get_1bpp_pixel(font_data, digits[0] * font_width + px, py, font_stride) << 1;
                 } else if (x >= font_width + number_dx && x < font_width * 2 + number_dx) {
                     int px = x - font_width - number_dx;
                     int py = y;
-                    p |= get_1bpp_pixel(font_data, hour_ones * font_width + px, py, font_stride) << 1;
+                    p |= get_1bpp_pixel(font_data, digits[1] * font_width + px, py, font_stride) << 1;
                 }
             }
             if (y >= number_dy) {
                 if (x >= number_dx && x < font_width + number_dx) {
                     int px = x - number_dx;
                     int py = y - number_dy;
-                    p |= get_1bpp_pixel(font_data, minute_tens * font_width + px, py, font_stride);
+                    p |= get_1bpp_pixel(font_data, digits[2] * font_width + px, py, font_stride);
                 } else if (x >= font_width + number_dx * 2) {
                     int px = x - font_width - number_dx * 2;
                     int py = y - number_dy;
-                    p |= get_1bpp_pixel(font_data, minute_ones * font_width + px, py, font_stride);
+                    p |= get_1bpp_pixel(font_data, digits[3] * font_width + px, py, font_stride);
                 }
             }
 
@@ -73,4 +65,30 @@ void render_time(BitmapLayer *layer, GBitmap *font) {
     }
 
     layer_mark_dirty(bitmap_layer_get_layer(layer));
+}
+
+void outlines_layer_update(Layer *layer, GContext *ctx) {
+    int digits[4];
+    get_time_digits(digits);
+
+    GRect font_bounds = gbitmap_get_bounds(s_outline_font);
+    int font_width = font_bounds.size.w / 10;
+    int font_height = font_bounds.size.h;
+
+    graphics_context_set_compositing_mode(ctx, GCompOpSet);
+
+    gbitmap_set_bounds(s_outline_font, GRect(digits[0] * font_width, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(-1, 0, font_width, font_height));
+    gbitmap_set_bounds(s_outline_font, GRect(digits[1] * font_width, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + number_dx - 3, 0, font_width, font_height));
+    gbitmap_set_bounds(s_outline_font, GRect(digits[2] * font_width, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(number_dx - 1, number_dy, font_width, font_height));
+    gbitmap_set_bounds(s_outline_font, GRect(digits[3] * font_width, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + number_dx * 2 - 3, number_dy, font_width, font_height));
+
+    gbitmap_set_bounds(s_outline_font, GRect(0, 0, font_width * 10, font_height));
+}
+
+void set_render_outline_font(GBitmap *font) {
+    s_outline_font = font;
 }

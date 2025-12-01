@@ -14,6 +14,8 @@ static void default_settings(void) {
     g_settings.text_color = GColorWhite;
     g_settings.top_text = TextModeWeekdayDay;
     g_settings.bottom_text = TextModeBattery;
+    g_settings.enable_outlines = false;
+    g_settings.outline_color = GColorBlack;
 }
 
 static void load_settings(void) {
@@ -42,6 +44,10 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
             g_settings.top_text = atoi(tuple->value->cstring);
         } else if (tuple->key == MESSAGE_KEY_BottomText) {
             g_settings.bottom_text = atoi(tuple->value->cstring);
+        } else if (tuple->key == MESSAGE_KEY_EnableOutlines) {
+            g_settings.enable_outlines = tuple->value->int16 != 0;
+        } else if (tuple->key == MESSAGE_KEY_OutlineColor) {
+            g_settings.outline_color = GColorFromHEX(tuple->value->uint32);
         }
     } while ((tuple = dict_read_next(iter)));
     apply_settings();

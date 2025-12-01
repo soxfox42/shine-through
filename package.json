@@ -27,7 +27,9 @@
       "OverlapColor",
       "TextColor",
       "TopText",
-      "BottomText"
+      "BottomText",
+      "EnableOutlines",
+      "OutlineColor"
     ],
     "resources": {
       "media": [
@@ -39,8 +41,15 @@
         },
         {
           "type": "bitmap",
+          "name": "OUTLINE_FONT",
+          "file": "outlines.png",
+          "memoryFormat": "1BitPalette"
+        },
+        {
+          "type": "bitmap",
           "name": "TEXT_FONT",
-          "file": "text.png"
+          "file": "text.png",
+          "memoryFormat": "1BitPalette"
         }
       ]
     },

@@ -6,11 +6,13 @@
 #include "settings.h"
 
 static GBitmap *s_number_font;
+static GBitmap *s_outline_font;
 static GBitmap *s_text_font;
 
 static Window *s_window;
 static GBitmap *s_time_bitmap;
 static BitmapLayer *s_time;
+static Layer *s_outlines;
 static Layer *s_top_text;
 static Layer *s_bottom_text;
 
@@ -111,6 +113,10 @@ static void handle_unobstructed_area_change(AnimationProgress progress, void *co
 
     Layer *time_layer = bitmap_layer_get_layer(s_time);
     layer_set_bounds(time_layer, bounds);
+
+    GRect outline_frame = GRect(0, 0, 144, 110);
+    grect_align(&outline_frame, &bounds, GAlignCenter, false);
+    layer_set_frame(s_outlines, outline_frame);
 }
 
 void apply_settings(void) {
@@ -118,13 +124,24 @@ void apply_settings(void) {
     text_palette[0] = g_settings.palette[0];
     text_palette[1] = g_settings.text_color;
 
+    static GColor outline_palette[2];
+    outline_palette[0] = GColorClear;
+    outline_palette[1] = g_settings.outline_color;
+
     window_set_background_color(s_window, g_settings.palette[0]);
     gbitmap_set_palette(s_text_font, text_palette, false);
     gbitmap_set_palette(s_time_bitmap, g_settings.palette, false);
+    gbitmap_set_palette(s_outline_font, outline_palette, false);
 
     layer_mark_dirty(bitmap_layer_get_layer(s_time));
     layer_mark_dirty(s_top_text);
     layer_mark_dirty(s_bottom_text);
+    if (g_settings.enable_outlines) {
+        layer_set_hidden(s_outlines, false);
+        layer_mark_dirty(s_outlines);
+    } else {
+        layer_set_hidden(s_outlines, true);
+    }
 }
 
 static void window_load(Window *window) {
@@ -151,10 +168,16 @@ static void window_load(Window *window) {
     bitmap_layer_set_bitmap(s_time, s_time_bitmap);
     layer_add_child(root, bitmap_layer_get_layer(s_time));
 
+    s_outlines = layer_create(GRect(0, 30, 144, 110));
+    layer_set_update_proc(s_outlines, outlines_layer_update);
+    layer_add_child(root, s_outlines);
+
     tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
     handle_tick(NULL, MINUTE_UNIT);
     battery_state_service_subscribe(handle_battery_update);
     unobstructed_area_service_subscribe((UnobstructedAreaHandlers){.change = handle_unobstructed_area_change}, NULL);
+
+    handle_unobstructed_area_change(0, NULL);
 
     apply_settings();
 }
@@ -164,14 +187,20 @@ static void window_unload(Window *window) {
     layer_destroy(s_bottom_text);
     bitmap_layer_destroy(s_time);
     gbitmap_destroy(s_time_bitmap);
+    layer_destroy(s_outlines);
     tick_timer_service_unsubscribe();
+    battery_state_service_unsubscribe();
+    unobstructed_area_service_unsubscribe();
 }
 
 static void app_init(void) {
     settings_init();
 
     s_number_font = gbitmap_create_with_resource(RESOURCE_ID_NUMBER_FONT);
+    s_outline_font = gbitmap_create_with_resource(RESOURCE_ID_OUTLINE_FONT);
     s_text_font = gbitmap_create_with_resource(RESOURCE_ID_TEXT_FONT);
+
+    set_render_outline_font(s_outline_font);
 
     s_window = window_create();
     window_set_window_handlers(
@@ -187,6 +216,8 @@ static void app_init(void) {
 static void app_deinit(void) {
     window_destroy(s_window);
     gbitmap_destroy(s_number_font);
+    gbitmap_destroy(s_outline_font);
+    gbitmap_destroy(s_text_font);
 }
 
 int main(void) {

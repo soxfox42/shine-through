@@ -50,6 +50,27 @@ module.exports = [
     items: [
       {
         type: "heading",
+        defaultValue: "Outlines",
+      },
+      {
+        type: "toggle",
+        messageKey: "EnableOutlines",
+        defaultValue: false,
+        label: "Show Outlines",
+      },
+      {
+        type: "color",
+        messageKey: "OutlineColor",
+        defaultValue: "000000",
+        label: "Outline Color",
+      },
+    ],
+  },
+  {
+    type: "section",
+    items: [
+      {
+        type: "heading",
         defaultValue: "Extra Text",
       },
       {
