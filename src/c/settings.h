@@ -14,8 +14,12 @@ typedef enum {
 } TextMode;
 
 typedef struct {
+#ifdef PBL_COLOR
     GColor palette[4];
     GColor text_color;
+#else
+    uint8_t dither[4];
+#endif
     TextMode top_text, bottom_text;
     bool enable_outlines;
     GColor outline_color;

@@ -7,7 +7,7 @@ const textModes = [
   { label: "Steps", value: 5 },
 ];
 
-module.exports = [
+const settings = [
   {
     type: "heading",
     defaultValue: "Shine Through Settings",
@@ -100,3 +100,16 @@ module.exports = [
     defaultValue: "Save Settings",
   },
 ];
+
+const watchInfo = Pebble.getActiveWatchInfo();
+if (["aplite", "diorite", "flint"].includes(watchInfo)) {
+  settings[3].items.splice(1, 1);
+  for (let i = 2; i < 5; i++) {
+    settings[1].items[i].layout = [
+      ["000000", "444444", "888888", "cccccc", "ffffff"],
+    ];
+    settings[1].items[i].sunlight = false;
+  }
+}
+
+module.exports = settings;

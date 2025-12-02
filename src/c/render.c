@@ -1,17 +1,30 @@
 #include "render.h"
 #include "utils.h"
 
+#ifndef PBL_COLOR
+#include "settings.h"
+#endif
+
 const int number_dx = 12;
 const int number_dy = 18;
 
 static GBitmap *s_outline_font;
 
+#ifdef PBL_COLOR
 static inline void set_2bpp_pixel(uint8_t *data, int x, int y, uint16_t stride, uint8_t color) {
     int index = y * stride + (x >> 2);
     int shift = 6 - (x << 1 & 6);
     int mask = ~(0b11 << shift);
     data[index] = (data[index] & mask) | (color << shift);
 }
+#else
+static inline void set_1bpp_pixel(uint8_t *data, int x, int y, uint16_t stride, uint8_t color) {
+    int index = y * stride + (x >> 3);
+    int shift = x & 7;
+    int mask = ~(0b1 << shift);
+    data[index] = (data[index] & mask) | (color << shift);
+}
+#endif
 
 static inline uint8_t get_1bpp_pixel(uint8_t *data, int x, int y, uint16_t stride) {
     int index = y * stride + (x >> 3);
@@ -60,7 +73,13 @@ void render_time(BitmapLayer *layer, GBitmap *font) {
                 }
             }
 
+#ifdef PBL_COLOR
             set_2bpp_pixel(data, x, y, stride, p);
+#else
+            uint8_t dither = (x * 2 + (y & 1) * 3) & 3;
+            uint8_t target = g_settings.dither[p];
+            set_1bpp_pixel(data, x, y, stride, dither < target);
+#endif
         }
     }
 

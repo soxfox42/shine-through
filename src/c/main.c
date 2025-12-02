@@ -121,27 +121,42 @@ static void handle_unobstructed_area_change(AnimationProgress progress, void *co
 
 void apply_settings(void) {
     static GColor text_palette[2];
-    text_palette[0] = g_settings.palette[0];
+#ifdef PBL_COLOR
+    text_palette[0] = GColorClear;
     text_palette[1] = g_settings.text_color;
+#else
+    text_palette[0] = g_settings.dither[0] ? GColorWhite : GColorBlack;
+    text_palette[1] = g_settings.dither[0] ? GColorBlack : GColorWhite;
+#endif
 
     static GColor outline_palette[2];
     outline_palette[0] = GColorClear;
     outline_palette[1] = g_settings.outline_color;
 
-    window_set_background_color(s_window, g_settings.palette[0]);
-    gbitmap_set_palette(s_text_font, text_palette, false);
+#ifdef PBL_COLOR
     gbitmap_set_palette(s_time_bitmap, g_settings.palette, false);
+    window_set_background_color(s_window, g_settings.palette[0]);
+#else
+    window_set_background_color(s_window, g_settings.dither[0] ? GColorWhite : GColorBlack);
+#endif
+    gbitmap_set_palette(s_text_font, text_palette, false);
     gbitmap_set_palette(s_outline_font, outline_palette, false);
 
-    layer_mark_dirty(bitmap_layer_get_layer(s_time));
-    layer_mark_dirty(s_top_text);
-    layer_mark_dirty(s_bottom_text);
     if (g_settings.enable_outlines) {
         layer_set_hidden(s_outlines, false);
         layer_mark_dirty(s_outlines);
     } else {
         layer_set_hidden(s_outlines, true);
     }
+#ifdef PBL_COLOR
+    // Color screens use a paletted bitmap, no need to do a full redraw
+    layer_mark_dirty(bitmap_layer_get_layer(s_time));
+    layer_mark_dirty(s_top_text);
+    layer_mark_dirty(s_bottom_text);
+#else
+    // Black/white should do a full redraw
+    handle_tick(NULL, MINUTE_UNIT);
+#endif
 }
 
 static void window_load(Window *window) {
@@ -156,13 +171,15 @@ static void window_load(Window *window) {
     layer_set_update_proc(s_bottom_text, bottom_text_layer_update);
     layer_add_child(root, s_bottom_text);
 
-    s_time_bitmap = gbitmap_create_blank(GSize(144, 108), GBitmapFormat2BitPalette);
+    s_time_bitmap = gbitmap_create_blank(GSize(144, 108), PBL_IF_COLOR_ELSE(GBitmapFormat2BitPalette, GBitmapFormat1Bit));
+#ifdef PBL_COLOR
     static GColor palette[4];
     palette[0] = GColorBlack;
     palette[1] = GColorOrange;
     palette[2] = GColorBrightGreen;
     palette[3] = GColorYellow;
     gbitmap_set_palette(s_time_bitmap, palette, false);
+#endif
 
     s_time = bitmap_layer_create(bounds);
     bitmap_layer_set_bitmap(s_time, s_time_bitmap);
