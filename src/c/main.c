@@ -5,14 +5,20 @@
 #include "render.h"
 #include "settings.h"
 
+#ifdef PBL_RECT
+#define ENABLE_TEXT
+#endif
+
 static GBitmap *s_number_font;
 static GBitmap *s_outline_font;
-static GBitmap *s_text_font;
 
 static Window *s_window;
 static GBitmap *s_time_bitmap;
 static BitmapLayer *s_time;
 static Layer *s_outlines;
+
+#ifdef ENABLE_TEXT
+static GBitmap *s_text_font;
 static Layer *s_top_text;
 static Layer *s_bottom_text;
 
@@ -96,17 +102,22 @@ static void top_text_layer_update(Layer *layer, GContext *ctx) {
 static void bottom_text_layer_update(Layer *layer, GContext *ctx) {
     draw_text(layer, ctx, get_text(g_settings.bottom_text), true);
 }
+#endif
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     render_time(s_time, s_number_font);
+#ifdef ENABLE_TEXT
     layer_mark_dirty(s_top_text);
     layer_mark_dirty(s_bottom_text);
+#endif
 }
 
+#ifdef ENABLE_TEXT
 static void handle_battery_update(BatteryChargeState charge) {
     layer_mark_dirty(s_top_text);
     layer_mark_dirty(s_bottom_text);
 }
+#endif
 
 static void handle_unobstructed_area_change(AnimationProgress progress, void *context) {
     GRect bounds = layer_get_unobstructed_bounds(window_get_root_layer(s_window));
@@ -120,6 +131,7 @@ static void handle_unobstructed_area_change(AnimationProgress progress, void *co
 }
 
 void apply_settings(void) {
+#ifdef ENABLE_TEXT
     static GColor text_palette[2];
 #ifdef PBL_COLOR
     text_palette[0] = GColorClear;
@@ -127,7 +139,8 @@ void apply_settings(void) {
 #else
     text_palette[0] = g_settings.dither[0] ? GColorWhite : GColorBlack;
     text_palette[1] = g_settings.dither[0] ? GColorBlack : GColorWhite;
-#endif
+#endif // PBL_COLOR
+#endif // ENABLE_TEXT
 
     static GColor outline_palette[2];
     outline_palette[0] = GColorClear;
@@ -139,7 +152,9 @@ void apply_settings(void) {
 #else
     window_set_background_color(s_window, g_settings.dither[0] ? GColorWhite : GColorBlack);
 #endif
+#ifdef ENABLE_TEXT
     gbitmap_set_palette(s_text_font, text_palette, false);
+#endif
     gbitmap_set_palette(s_outline_font, outline_palette, false);
 
     if (g_settings.enable_outlines) {
@@ -151,8 +166,10 @@ void apply_settings(void) {
 #ifdef PBL_COLOR
     // Color screens use a paletted bitmap, no need to do a full redraw
     layer_mark_dirty(bitmap_layer_get_layer(s_time));
+#ifdef ENABLE_TEXT
     layer_mark_dirty(s_top_text);
     layer_mark_dirty(s_bottom_text);
+#endif // ENABLE_TEXT
 #else
     // Black/white should do a full redraw
     handle_tick(NULL, MINUTE_UNIT);
@@ -163,6 +180,7 @@ static void window_load(Window *window) {
     Layer *root = window_get_root_layer(window);
     GRect bounds = layer_get_unobstructed_bounds(root);
 
+#ifdef ENABLE_TEXT
     s_top_text = layer_create(GRect(4, 4, PBL_DISPLAY_WIDTH - 8, 20));
     layer_set_update_proc(s_top_text, top_text_layer_update);
     layer_add_child(root, s_top_text);
@@ -170,6 +188,7 @@ static void window_load(Window *window) {
     s_bottom_text = layer_create(GRect(4, PBL_DISPLAY_HEIGHT - 24, PBL_DISPLAY_WIDTH - 8, 20));
     layer_set_update_proc(s_bottom_text, bottom_text_layer_update);
     layer_add_child(root, s_bottom_text);
+#endif
 
     s_time_bitmap = gbitmap_create_blank(GSize(144, 108), PBL_IF_COLOR_ELSE(GBitmapFormat2BitPalette, GBitmapFormat1Bit));
 #ifdef PBL_COLOR
@@ -191,7 +210,9 @@ static void window_load(Window *window) {
 
     tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
     handle_tick(NULL, MINUTE_UNIT);
+#ifdef ENABLE_TEXT
     battery_state_service_subscribe(handle_battery_update);
+#endif
     unobstructed_area_service_subscribe((UnobstructedAreaHandlers){.change = handle_unobstructed_area_change}, NULL);
 
     handle_unobstructed_area_change(0, NULL);
@@ -200,8 +221,10 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
+#ifdef ENABLE_TEXT
     layer_destroy(s_top_text);
     layer_destroy(s_bottom_text);
+#endif
     bitmap_layer_destroy(s_time);
     gbitmap_destroy(s_time_bitmap);
     layer_destroy(s_outlines);
@@ -215,7 +238,9 @@ static void app_init(void) {
 
     s_number_font = gbitmap_create_with_resource(RESOURCE_ID_NUMBER_FONT);
     s_outline_font = gbitmap_create_with_resource(RESOURCE_ID_OUTLINE_FONT);
+#ifdef ENABLE_TEXT
     s_text_font = gbitmap_create_with_resource(RESOURCE_ID_TEXT_FONT);
+#endif
 
     set_render_outline_font(s_outline_font);
 
@@ -234,7 +259,9 @@ static void app_deinit(void) {
     window_destroy(s_window);
     gbitmap_destroy(s_number_font);
     gbitmap_destroy(s_outline_font);
+#ifdef ENABLE_TEXT
     gbitmap_destroy(s_text_font);
+#endif
 }
 
 int main(void) {

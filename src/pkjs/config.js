@@ -68,6 +68,7 @@ const settings = [
   },
   {
     type: "section",
+    capabilities: ["RECT"],
     items: [
       {
         type: "heading",
