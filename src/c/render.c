@@ -5,8 +5,13 @@
 #include "settings.h"
 #endif
 
-const int number_dx = 12;
-const int number_dy = 18;
+#if PBL_DISPLAY_WIDTH > 180
+#define NUMBER_DX 16
+#define NUMBER_DY 24
+#else
+#define NUMBER_DX 12
+#define NUMBER_DY 18
+#endif
 
 static GBitmap *s_outline_font;
 
@@ -55,20 +60,20 @@ void render_time(BitmapLayer *layer, GBitmap *font) {
                     int px = x;
                     int py = y;
                     p |= get_1bpp_pixel(font_data, digits[0] * font_width + px, py, font_stride) << 1;
-                } else if (x >= font_width + number_dx && x < font_width * 2 + number_dx) {
-                    int px = x - font_width - number_dx;
+                } else if (x >= font_width + NUMBER_DX && x < font_width * 2 + NUMBER_DX) {
+                    int px = x - font_width - NUMBER_DX;
                     int py = y;
                     p |= get_1bpp_pixel(font_data, digits[1] * font_width + px, py, font_stride) << 1;
                 }
             }
-            if (y >= number_dy) {
-                if (x >= number_dx && x < font_width + number_dx) {
-                    int px = x - number_dx;
-                    int py = y - number_dy;
+            if (y >= NUMBER_DY) {
+                if (x >= NUMBER_DX && x < font_width + NUMBER_DX) {
+                    int px = x - NUMBER_DX;
+                    int py = y - NUMBER_DY;
                     p |= get_1bpp_pixel(font_data, digits[2] * font_width + px, py, font_stride);
-                } else if (x >= font_width + number_dx * 2) {
-                    int px = x - font_width - number_dx * 2;
-                    int py = y - number_dy;
+                } else if (x >= font_width + NUMBER_DX * 2) {
+                    int px = x - font_width - NUMBER_DX * 2;
+                    int py = y - NUMBER_DY;
                     p |= get_1bpp_pixel(font_data, digits[3] * font_width + px, py, font_stride);
                 }
             }
@@ -99,11 +104,11 @@ void outlines_layer_update(Layer *layer, GContext *ctx) {
     gbitmap_set_bounds(s_outline_font, GRect(digits[0] * font_width, 0, font_width, font_height));
     graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(-1, 0, font_width, font_height));
     gbitmap_set_bounds(s_outline_font, GRect(digits[1] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + number_dx - 3, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + NUMBER_DX - 3, 0, font_width, font_height));
     gbitmap_set_bounds(s_outline_font, GRect(digits[2] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(number_dx - 1, number_dy, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(NUMBER_DX - 1, NUMBER_DY, font_width, font_height));
     gbitmap_set_bounds(s_outline_font, GRect(digits[3] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + number_dx * 2 - 3, number_dy, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + NUMBER_DX * 2 - 3, NUMBER_DY, font_width, font_height));
 
     gbitmap_set_bounds(s_outline_font, GRect(0, 0, font_width * 10, font_height));
 }

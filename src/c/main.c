@@ -9,6 +9,13 @@
 #define ENABLE_TEXT
 #endif
 
+#define TEXT_HEIGHT 20
+#if PBL_DISPLAY_HEIGHT > 180
+#define TEXT_INSET 10
+#else
+#define TEXT_INSET 4
+#endif
+
 static GBitmap *s_number_font;
 static GBitmap *s_outline_font;
 
@@ -181,16 +188,20 @@ static void window_load(Window *window) {
     GRect bounds = layer_get_unobstructed_bounds(root);
 
 #ifdef ENABLE_TEXT
-    s_top_text = layer_create(GRect(4, 4, PBL_DISPLAY_WIDTH - 8, 20));
+    s_top_text = layer_create(GRect(TEXT_INSET, TEXT_INSET, PBL_DISPLAY_WIDTH - TEXT_INSET * 2, TEXT_HEIGHT));
     layer_set_update_proc(s_top_text, top_text_layer_update);
     layer_add_child(root, s_top_text);
 
-    s_bottom_text = layer_create(GRect(4, PBL_DISPLAY_HEIGHT - 24, PBL_DISPLAY_WIDTH - 8, 20));
+    s_bottom_text = layer_create(GRect(TEXT_INSET, PBL_DISPLAY_HEIGHT - TEXT_HEIGHT - TEXT_INSET, PBL_DISPLAY_WIDTH - TEXT_INSET * 2, TEXT_HEIGHT));
     layer_set_update_proc(s_bottom_text, bottom_text_layer_update);
     layer_add_child(root, s_bottom_text);
 #endif
 
-    s_time_bitmap = gbitmap_create_blank(GSize(144, 108), PBL_IF_COLOR_ELSE(GBitmapFormat2BitPalette, GBitmapFormat1Bit));
+    s_time_bitmap = gbitmap_create_blank(
+        PBL_DISPLAY_WIDTH > 180 ? GSize(192, 144) : GSize(144, 108),
+        PBL_IF_COLOR_ELSE(GBitmapFormat2BitPalette, GBitmapFormat1Bit)
+    );
+
 #ifdef PBL_COLOR
     static GColor palette[4];
     palette[0] = GColorBlack;
