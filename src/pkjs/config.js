@@ -103,7 +103,7 @@ const settings = [
 ];
 
 const watchInfo = Pebble.getActiveWatchInfo();
-if (["aplite", "diorite", "flint"].includes(watchInfo)) {
+if (["aplite", "diorite", "flint"].includes(watchInfo.platform)) {
   settings[3].items.splice(1, 1);
   for (let i = 2; i < 5; i++) {
     settings[1].items[i].layout = [

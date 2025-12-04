@@ -46,6 +46,7 @@ static void draw_text(Layer *layer, GContext *ctx, char *text, bool right) {
     int x = 0;
     size_t len = strlen(text);
 
+    graphics_context_set_compositing_mode(ctx, GCompOpSet);
     for (size_t i = 0; i < len; i++) {
         size_t j = right ? len - i - 1 : i;
         if (text[j] == ' ') {
@@ -132,7 +133,7 @@ static void handle_unobstructed_area_change(AnimationProgress progress, void *co
     Layer *time_layer = bitmap_layer_get_layer(s_time);
     layer_set_bounds(time_layer, bounds);
 
-    GRect outline_frame = GRect(0, 0, 144, 110);
+    GRect outline_frame = PBL_DISPLAY_WIDTH > 180 ? GRect(0, 0, 194, 146) : GRect(0, 0, 146, 110);
     grect_align(&outline_frame, &bounds, GAlignCenter, false);
     layer_set_frame(s_outlines, outline_frame);
 }
@@ -140,11 +141,10 @@ static void handle_unobstructed_area_change(AnimationProgress progress, void *co
 void apply_settings(void) {
 #ifdef ENABLE_TEXT
     static GColor text_palette[2];
-#ifdef PBL_COLOR
     text_palette[0] = GColorClear;
+#ifdef PBL_COLOR
     text_palette[1] = g_settings.text_color;
 #else
-    text_palette[0] = g_settings.dither[0] ? GColorWhite : GColorBlack;
     text_palette[1] = g_settings.dither[0] ? GColorBlack : GColorWhite;
 #endif // PBL_COLOR
 #endif // ENABLE_TEXT
@@ -215,7 +215,9 @@ static void window_load(Window *window) {
     bitmap_layer_set_bitmap(s_time, s_time_bitmap);
     layer_add_child(root, bitmap_layer_get_layer(s_time));
 
-    s_outlines = layer_create(GRect(0, 30, 144, 110));
+    GRect outline_frame = PBL_DISPLAY_WIDTH > 180 ? GRect(0, 0, 194, 146) : GRect(0, 0, 146, 110);
+    grect_align(&outline_frame, &bounds, GAlignCenter, false);
+    s_outlines = layer_create(outline_frame);
     layer_set_update_proc(s_outlines, outlines_layer_update);
     layer_add_child(root, s_outlines);
 

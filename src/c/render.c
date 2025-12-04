@@ -102,13 +102,13 @@ void outlines_layer_update(Layer *layer, GContext *ctx) {
     graphics_context_set_compositing_mode(ctx, GCompOpSet);
 
     gbitmap_set_bounds(s_outline_font, GRect(digits[0] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(-1, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(0, 0, font_width, font_height));
     gbitmap_set_bounds(s_outline_font, GRect(digits[1] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + NUMBER_DX - 3, 0, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + NUMBER_DX - 2, 0, font_width, font_height));
     gbitmap_set_bounds(s_outline_font, GRect(digits[2] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(NUMBER_DX - 1, NUMBER_DY, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(NUMBER_DX, NUMBER_DY, font_width, font_height));
     gbitmap_set_bounds(s_outline_font, GRect(digits[3] * font_width, 0, font_width, font_height));
-    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + NUMBER_DX * 2 - 3, NUMBER_DY, font_width, font_height));
+    graphics_draw_bitmap_in_rect(ctx, s_outline_font, GRect(font_width + NUMBER_DX * 2 - 2, NUMBER_DY, font_width, font_height));
 
     gbitmap_set_bounds(s_outline_font, GRect(0, 0, font_width * 10, font_height));
 }

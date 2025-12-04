@@ -16,7 +16,7 @@ static void default_settings(void) {
 #else
     g_settings.dither[0] = 0;
     g_settings.dither[1] = 2;
-    g_settings.dither[2] = 1;
+    g_settings.dither[2] = 3;
     g_settings.dither[3] = 4;
 #endif
     g_settings.top_text = TextModeWeekdayDay;
